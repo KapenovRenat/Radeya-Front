@@ -1,0 +1,37 @@
+@import "styles/variations";
+
+.location-block {
+  height: 40px;
+  max-height: 40px;
+  background: #ededed;
+
+  &__contain {
+    display: grid;
+    height: 100%;
+    grid-template-columns: 1fr 1fr;
+    align-content: center;
+
+    .loc-popup {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+
+      &:hover {
+        p {
+          color: $bg-red;
+        }
+      }
+
+      img {
+        width: 25px;
+      }
+
+      p {
+        font-size: 16px;
+        line-height: 16px;
+        margin-left: 5px;
+      }
+    }
+  }
+}
+

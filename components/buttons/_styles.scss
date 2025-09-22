@@ -1,0 +1,29 @@
+@import "styles/variations";
+
+.button {
+  border: none;
+  border-radius: 28px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+  outline: none;
+  cursor: pointer;
+}
+
+.button-submit {
+  background: $bg-red;
+  color: #fff;
+
+  &:hover {
+    background: $bg-red-hover;
+    transition: .2s;
+  }
+}
+
+.btn-transparent {
+  background: transparent;
+  color: #fff;
+}

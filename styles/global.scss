@@ -1,5 +1,29 @@
+@import "components/buttons/styles";
+@import "layout/location/styles";
+@import "layout/nav-bar/styles";
+@import "components/burger/styles";
+
 body {
   margin: 0;
   background-color: #f9f9f9;
   color: #333;
+}
+
+button {
+  border: none;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1140px;
+  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 15px;
+  position: relative;
 }
