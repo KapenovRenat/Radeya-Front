@@ -6,9 +6,3 @@ export interface User {
     password?: string;
     role?: Role;
 }
-
-export interface UserState {
-    account: User | null;
-    status: "idle" | "loading" | "succeeded" | "failed";
-    error?: string | null;
-}

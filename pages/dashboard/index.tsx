@@ -4,6 +4,7 @@ import {AppDispatch, RootState} from '@/store';
 import {fetchMe} from "@/store/reducers/auth";
 import {useDispatch} from "react-redux";
 import { useRouter } from 'next/router';
+import DashboardProducts from "@/layout/dashboard-products";
 
 function Dashboard(props: any) {
     const user = useSelector((state: RootState) => state.auth.user);
@@ -90,6 +91,9 @@ function Dashboard(props: any) {
 
                     </div>
                 </div>
+
+                <DashboardProducts/>
+
             </div>
         </div>
     );
