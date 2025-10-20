@@ -6,9 +6,13 @@ import {formatPriceKZT} from "@/utils/formatPriceKZT";
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import {parseLine} from "@/utils/parseNameProduct";
-import Table from "@/components/table";
-import TableRow from "@/components/table/tableRow";
+import TableComponent from "@/components/table";
+import TableRowComponent from "@/components/table/tableRow";
 import CircleColor from "@/components/cicleColor";
+import Button from '@mui/material/Button';
+import SendIcon from '@mui/icons-material/Send';
+import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
 
 
 interface Props {
@@ -32,7 +36,7 @@ function DashboardProducts(props: Props) {
     }
 
     function getListProduct(page?: number) {
-        dispatch(getProducts({page: page ? page : product.page ?? 1, limit: 20, search}))
+        dispatch(getProducts({page: page ? page : product.page ?? 1, limit: 10, search}))
             .unwrap()
             .then((data) => {
                 console.log("✅ Data:", data);
@@ -86,17 +90,34 @@ function DashboardProducts(props: Props) {
 
     return (
         <div className="dashboard_products">
-            <div className="input-group input-group-lg">
-                <span className="input-group-text" id="product-search">Поиск</span>
-                <input type="text" className="form-control" aria-label="Sizing example input"
-                       aria-describedby="inputGroup-sizing-lg" value={search} onChange={searchProduct}/>
-                <button type="button" className="btn btn-primary" onClick={searchSubmit}>Поиск</button>
-            </div>
+            <h2>Товары из Мой Склад</h2>
+            {
+                (product.items.length <= 0 && loading) || product.total === 0 ? <></> : <div className="input-group">
+                    <TextField
+                        className="search-input"
+                        required
+                        id="outlined-required"
+                        label="Название или артикул"
+                        defaultValue="Название или артикул"
+                        value={search} onChange={searchProduct}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && search.length !== 0 && !loading) {
+                                e.preventDefault(); // чтобы форма не перезагружалась
+                                searchSubmit();
+                            }
+                        }}
+                    />
+
+                    <Button onClick={searchSubmit} variant="contained" endIcon={<SendIcon />} disabled={loading}>
+                        Поиск
+                    </Button>
+                </div>
+            }
 
             {
-                product.items.length <= 0 && loading ? <div>Wait</div> :
+                (product.items.length <= 0 && loading) || product.total === 0 ? <div style={{marginTop: '20px'}}><CircularProgress /></div> :
                     <>
-                        <Table tableId="products" rowsNames={rowsNames} >
+                        <TableComponent tableId="products" rowsNames={rowsNames} >
                             {columns.map(item => {
                                 const rowItem = [
                                     <CircleColor title={item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : 'Неизвестно'}/>,
@@ -110,43 +131,15 @@ function DashboardProducts(props: Props) {
                                 ]
 
                                 return (
-                                    <TableRow key={item._id} data={rowItem}/>
+                                    <TableRowComponent key={item._id} data={rowItem}/>
                                 )
                             })}
-                        </Table>
-                        {/*<table className="table">*/}
-                        {/*    <thead>*/}
-                        {/*    <tr>*/}
-                        {/*        <th scope="col">Цвет</th>*/}
-                        {/*        <th scope="col">Название</th>*/}
-                        {/*        <th scope="col">Название ткань</th>*/}
-                        {/*        <th scope="col">Тип ткани</th>*/}
-                        {/*        <th scope="col">Размер</th>*/}
-                        {/*        <th scope="col">Артикул</th>*/}
-                        {/*        <th scope="col">Цена Каспи</th>*/}
-                        {/*        <th scope="col">Ссылка Каспи</th>*/}
-                        {/*    </tr>*/}
-                        {/*    </thead>*/}
-                        {/*    <tbody className="table-group-divider">*/}
-                        {/*    {columns.map(item => (*/}
-                        {/*        <tr key={item._id}>*/}
-                        {/*            <td>{item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : '-'}</td>*/}
-                        {/*            <td>{item.name}</td>*/}
-                        {/*            <td>{item?.fabrics && item?.fabrics.length > 0 ? item?.fabrics?.join(", ") : '-'}</td>*/}
-                        {/*            <td>{item.upholstery}</td>*/}
-                        {/*            <td>{item.sizeCm ? `${item.sizeCm} см` : '-'}</td>*/}
-                        {/*            <td>{item.article}</td>*/}
-                        {/*            <td>{formatPriceKZT(item.kaspiPrice)}</td>*/}
-                        {/*            <td><a href={item.kaspiLink} target="_blank">Каспи</a></td>*/}
-                        {/*        </tr>*/}
-                        {/*    ))}*/}
-                        {/*    </tbody>*/}
-                        {/*</table>*/}
+                        </TableComponent>
                 </>
             }
 
             {
-                product.items.length <= 0 && loading ? <></> : <div>
+                (product.items.length <= 0 && loading) || product.total === 0 ? <></> : <div className="dashboard_products__pagination">
                     <Stack spacing={2}>
                         <Pagination count={product.total && product.limit ? Math.round(product.total / product.limit) : 1} defaultPage={product.page ?? undefined} color="primary" onChange={handleChangePagination}/>
                     </Stack>

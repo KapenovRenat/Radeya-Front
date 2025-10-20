@@ -1,5 +1,12 @@
 import React, {ReactNode} from 'react';
 import {formatPriceKZT} from "@/utils/formatPriceKZT";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 
 interface Props {
     rowsNames: string[];
@@ -7,35 +14,28 @@ interface Props {
     tableId: string
 }
 
-function Table(props: Props) {
+function TableComponent(props: Props) {
     const {children, rowsNames, tableId} = props;
 
     return (
-        <table className="table" id={tableId}>
-            <thead>
-            <tr>
-                {rowsNames.map((name, index) => (
-                    <th scope="col" key={index}>{name}</th>
-                ))}
-            </tr>
-            </thead>
-            <tbody className="table-group-divider">
-            {children}
-            {/*{rowsData.map(item => (*/}
-            {/*    <tr key={item._id}>*/}
-            {/*        <td>{item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : '-'}</td>*/}
-            {/*        <td>{item.name}</td>*/}
-            {/*        <td>{item?.fabrics && item?.fabrics.length > 0 ? item?.fabrics?.join(", ") : '-'}</td>*/}
-            {/*        <td>{item.upholstery}</td>*/}
-            {/*        <td>{item.sizeCm ? `${item.sizeCm} см` : '-'}</td>*/}
-            {/*        <td>{item.article}</td>*/}
-            {/*        <td>{formatPriceKZT(item.kaspiPrice)}</td>*/}
-            {/*        <td><a href={item.kaspiLink} target="_blank">Каспи</a></td>*/}
-            {/*    </tr>*/}
-            {/*))}*/}
-            </tbody>
-        </table>
+        <>
+            <TableContainer component={Paper}>
+                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                    <TableHead>
+                        <TableRow>
+                            {rowsNames.map((name, index) => (
+                                <TableCell>{name}</TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {children}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </>
+
     );
 }
 
-export default Table;
+export default TableComponent;
