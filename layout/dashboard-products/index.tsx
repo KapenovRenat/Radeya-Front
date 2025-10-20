@@ -8,6 +8,7 @@ import Stack from '@mui/material/Stack';
 import {parseLine} from "@/utils/parseNameProduct";
 import Table from "@/components/table";
 import TableRow from "@/components/table/tableRow";
+import CircleColor from "@/components/cicleColor";
 
 
 interface Props {
@@ -98,7 +99,7 @@ function DashboardProducts(props: Props) {
                         <Table tableId="products" rowsNames={rowsNames} >
                             {columns.map(item => {
                                 const rowItem = [
-                                    item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : '',
+                                    <CircleColor title={item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : 'Неизвестно'}/>,
                                     item.name,
                                     item?.fabrics && item?.fabrics.length > 0 ? item?.fabrics?.join(", ") : '',
                                     item.upholstery ? item.upholstery : '',
