@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiAxis from "@/utils/axios";
 import {Product} from "@/types/products/products";
 
-interface ProductsState {
+export interface ProductsState {
     product: Product;
     loading: boolean;
     error: string | null;
@@ -23,11 +23,11 @@ const initialState: ProductsState = {
 // 🟢 Асинхронный thunk: логин
 export const getProducts = createAsyncThunk<
     Product, // что вернём
-    { page: number; limit: number }, // аргументы
+    { page: number; limit: number, search?: string }, // аргументы
     { rejectValue: string } // ошибка
->("/products", async ({ page, limit }, { rejectWithValue }) => {
+>("/products", async ({ page, limit, search }, { rejectWithValue }) => {
     try {
-        const res = await apiAxis.post("/products", { page, limit });
+        const res = await apiAxis.post("/products", { page, limit, search });
 
         return res.data as Product;
     } catch (err: any) {

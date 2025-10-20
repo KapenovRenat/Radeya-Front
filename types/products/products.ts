@@ -18,8 +18,8 @@ export interface ProductItem {
 
 export interface Product {
     page: number | null,
-    limit: number | null,
-    total: number | null,
-    pages: number | null,
+    limit: number | null | undefined,
+    total: number | null | undefined,
+    pages: number | null |  undefined,
     items: Array<ProductItem>,
 }
