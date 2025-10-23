@@ -1,0 +1,46 @@
+.dashboard__accounting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 20px;
+    margin: 40px 0;
+
+    width: 100%;
+
+    &_col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      border: 1px solid #cfcfcf;
+      border-radius: 15px;
+      padding: 10px;
+
+      &-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+
+        .accounting-card {
+          width: 100%;
+
+          .accounting-card-title {
+            font-size: 22px;
+            text-align: center;
+          }
+
+          .accounting-card-body_details {
+            p {
+              margin: 0 0 5px 0;
+            }
+          }
+        }
+      }
+    }
+  }
+}

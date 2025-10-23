@@ -6,11 +6,22 @@ import {useDispatch} from "react-redux";
 import { useRouter } from 'next/router';
 import DashboardProducts from "@/layout/dashboard-products";
 import RandomazeBlock from "@/layout/randomaze-block";
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import SendIcon from "@mui/icons-material/Send";
+import Button from "@mui/material/Button";
+import ModalBox from "@/components/modal-box";
+import ModalAccounting from "@/components/modal-box/accounting";
+import DashboardAccounting from "@/layout/dashboard-accounting";
 
 function Dashboard(props: any) {
     const user = useSelector((state: RootState) => state.auth.user);
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
+    const [openModal, setOpenModal] = React.useState(false);
+
+    const handleOpen = () => setOpenModal(true);
+    const handleClose = () => setOpenModal(false);
 
     useEffect(() => {
         dispatch(fetchMe())
@@ -29,69 +40,23 @@ function Dashboard(props: any) {
             <div className="dashboard">
                 <h1>Dashboard</h1>
                 {user ? <p>Привет, {user.login}!</p> : <p>Пожалуйста, войдите в систему.</p>}
-                {user && user.role === 'admin' ? <button type="button" className="btn btn-success">Создать Таблицу</button> : null}
+                {user && user.role === 'admin' ? <Button onClick={handleOpen} variant="contained">
+                    Создать таблицу учета
+                </Button> : null}
 
-                <div className="dashboard__panel">
-                    <h2>Учет заказов</h2>
+                <Modal
+                    open={openModal}
+                    onClose={handleClose}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <ModalBox>
+                        <ModalAccounting closeModal={handleClose}/>
+                    </ModalBox>
+                </Modal>
 
-                    <div className="dashboard__columns">
-                        <div className="dashboard__columns_col">
-                            <h6>Каспи Магазин</h6>
+                <DashboardAccounting/>
 
-                            <div className="dashboard__columns_col-content">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="dashboard__columns_col">
-                            <h6>NCity</h6>
-
-                            <div className="dashboard__columns_col-content">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="dashboard__columns_col">
-                            <h6>Артем</h6>
-
-                            <div className="dashboard__columns_col-content">
-
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
 
                 <RandomazeBlock />
 
