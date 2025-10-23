@@ -1,0 +1,39 @@
+.randomaze-block {
+  width: 100%;
+  margin-bottom: 50px;
+
+  h4 {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  &__input {
+    margin: 0;
+    width: 500px;
+    display: grid;
+    grid-template-columns: 1fr 80px 150px;
+    grid-gap: 10px;
+  }
+
+  &__result {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 20px;
+
+    h6 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    &_info {
+      font-size: 16px;
+      font-weight: bold;
+      color: blue;
+    }
+  }
+}
