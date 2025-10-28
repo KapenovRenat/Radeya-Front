@@ -13,13 +13,10 @@ const Home: NextPage<HomeProps> = ({ user }) => (
         <LocationBlock />
         <NavBar />
         <div className="home-slider">
-            Здесь будут большие баннеры!
+            <h2>Здесь будут большие баннеры!</h2>
         </div>
         <div className="container">
-            <h1>Добро пожаловать в мебельный магазин</h1>
-            {user ? <p>Привет, {user.name}!</p> : <p>Пожалуйста, войдите в систему.</p>}
-            <Button>Hello</Button>
-            <button type="button" className="btn btn-primary">Primary</button>
+
         </div>
     </div>
 );
