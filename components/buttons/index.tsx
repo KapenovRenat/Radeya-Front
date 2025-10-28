@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 interface TypeButton {
-    type?: 'submit' | 'default' | undefined | 'btn-transparent',
+    type?: 'submit' | 'default' | undefined | 'btn-transparent' | 'black-br',
     disabled?: boolean,
     children?: React.ReactNode
 }
@@ -10,7 +10,7 @@ interface TypeButton {
 const Button = (props : TypeButton) => {
     const { type = 'submit', disabled = false, children } = props;
 
-    const classStyle = type === 'submit' ? 'button-submit' : type === 'btn-transparent' ? 'btn-transparent' : '';
+    const classStyle = type === 'submit' ? 'button-submit' : type === 'btn-transparent' ? 'btn-transparent' : type === 'black-br' ? 'btn-black-br' : '';
 
 
     return (

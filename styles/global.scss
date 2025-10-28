@@ -1,3 +1,4 @@
+@import './fonts';
 @import "components/buttons/styles";
 @import "layout/location/styles";
 @import "layout/nav-bar/styles";
@@ -9,10 +10,11 @@
 @import "components/table/tableRow/styles";
 @import "components/cicleColor/styles";
 @import "layout/randomaze-block/styles";
+@import "pages/styles";
 
 body {
   margin: 0;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   color: #333;
 }
 
@@ -27,10 +29,11 @@ p {
 
 .container {
   width: 100%;
-  max-width: 1140px;
+  //max-width: 1140px;
+  max-width: calc(1780px + 20px * 2);
   height: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding: 0 15px;
+  //padding: 0 15px;
   position: relative;
 }

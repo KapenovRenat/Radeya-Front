@@ -1,4 +1,5 @@
 import React from 'react';
+import LocationSvg from '@/public/svg/location.svg';
 
 function LocationBlock(props: any) {
 
@@ -6,7 +7,7 @@ function LocationBlock(props: any) {
         <div className="container">
             <div className="location-block__contain">
                 <div className="loc-popup">
-                    <img src="/svg/location.svg" alt="Location" />
+                    <LocationSvg />
                     <p>Астана</p>
                 </div>
 
