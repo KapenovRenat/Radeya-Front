@@ -3,6 +3,8 @@ import axios from '../utils/axios';
 import Button from "@/components/buttons";
 import LocationBlock from "@/layout/location";
 import NavBar from "@/layout/nav-bar";
+import {HomeSlider} from "@/layout/home-slider";
+import HomeCategory from "@/layout/home-category";
 
 interface HomeProps {
     user?: { name: string };
@@ -12,11 +14,9 @@ const Home: NextPage<HomeProps> = ({ user }) => (
     <div className="home">
         <LocationBlock />
         <NavBar />
-        <div className="home-slider">
-            <h2>Здесь будут большие баннеры!</h2>
-        </div>
+        <HomeSlider />
         <div className="container">
-
+            <HomeCategory />
         </div>
     </div>
 );

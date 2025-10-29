@@ -11,6 +11,8 @@
 @import "components/cicleColor/styles";
 @import "layout/randomaze-block/styles";
 @import "pages/styles";
+@import "layout/home-slider/styles";
+@import "layout/home-category/styles";
 
 body {
   margin: 0;
@@ -37,3 +39,4 @@ p {
   //padding: 0 15px;
   position: relative;
 }
+
