@@ -17,26 +17,29 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 interface Props {
     children?: React.ReactNode;
+    type: 'main' | 'my-sklad';
+    rows: any;
+    columsNames: any[];
+    title: string
 }
 
 function DashboardProducts(props: Props) {
-    const dispatch = useDispatch<AppDispatch>();
-    const product = useSelector((state: RootState) => state.products.product);
+    const { rows, columsNames, title } = props;
     const {loading} = useSelector((state: RootState) => state.products);
-
+    const dispatch = useDispatch<AppDispatch>();
     const [search, setSearch] = useState<string>('');
 
 
-    useEffect(() => {
-        getListProduct();
-    }, []);
+    // useEffect(() => {
+    //     getListProduct();
+    // }, []);
 
     function searchProduct(e: React.ChangeEvent<HTMLInputElement>) {
         setSearch(e.target.value);
     }
 
     function getListProduct(page?: number) {
-        dispatch(getProducts({page: page ? page : product.page ?? 1, limit: 10, search}))
+        dispatch(getProducts({page: page ? page : rows.page ?? 1, limit: 10, search}))
             .unwrap()
             .then((data) => {
                 console.log("✅ Data:", data);
@@ -52,10 +55,10 @@ function DashboardProducts(props: Props) {
     }
 
     const handleChangePagination = (event: React.ChangeEvent<unknown>, value: number) => {
-        if (!loading && product.page !== value) getListProduct(value);
+        if (!loading && rows.page !== value) getListProduct(value);
     };
 
-    const columns = product.items.length <= 0 ? [] : product.items.map((item) => {
+    const columns = rows.items.length <= 0 ? [] : rows.items.map((item: any) => {
         const {
             name,
             upholstery,
@@ -65,7 +68,7 @@ function DashboardProducts(props: Props) {
         } = parseLine(item.name);
 
         return {
-            _id: item._id,
+            id: item._id,
             name,
             upholstery,
             sizeCm,
@@ -77,22 +80,12 @@ function DashboardProducts(props: Props) {
         }
     });
 
-    const rowsNames = [
-        'Цвет',
-        'Название',
-        'Название ткани',
-        'Тип ткани',
-        'Размер',
-        'Артикул',
-        'Цена Каспи',
-        'Ссылка Каспи',
-    ];
-
     return (
         <div className="dashboard_products">
-            <h2>Товары из Мой Склад</h2>
+            <h2>{title}</h2>
+
             {
-                (product.items.length <= 0 && loading) || product.total === 0 ? <></> : <div className="input-group">
+                (rows.items.length <= 0 && loading) || rows.total === 0 ? <></> : <div className="input-group">
                     <TextField
                         className="search-input"
                         required
@@ -115,10 +108,10 @@ function DashboardProducts(props: Props) {
             }
 
             {
-                (product.items.length <= 0 && loading) || product.total === 0 ? <div style={{marginTop: '20px'}}><CircularProgress /></div> :
+                (rows.items.length <= 0 && loading) || rows.total === 0 ? <div style={{marginTop: '20px'}}><CircularProgress /></div> :
                     <>
-                        <TableComponent tableId="products" rowsNames={rowsNames} >
-                            {columns.map(item => {
+                        <TableComponent tableId="products" rowsNames={columsNames} >
+                            {columns.map((item: any) => {
                                 const rowItem = [
                                     <CircleColor title={item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : 'Неизвестно'}/>,
                                     item.name,
@@ -131,7 +124,7 @@ function DashboardProducts(props: Props) {
                                 ]
 
                                 return (
-                                    <TableRowComponent key={item._id} data={rowItem}/>
+                                    <TableRowComponent key={item.id} data={rowItem}/>
                                 )
                             })}
                         </TableComponent>
@@ -139,9 +132,9 @@ function DashboardProducts(props: Props) {
             }
 
             {
-                (product.items.length <= 0 && loading) || product.total === 0 ? <></> : <div className="dashboard_products__pagination">
+                (rows.items.length <= 0 && loading) || rows.total === 0 ? <></> : <div className="dashboard_products__pagination">
                     <Stack spacing={2}>
-                        <Pagination count={product.total && product.limit ? Math.round(product.total / product.limit) : 1} defaultPage={product.page ?? undefined} color="primary" onChange={handleChangePagination}/>
+                        <Pagination count={rows.total && rows.limit ? Math.round(rows.total /  rows.limit) : 1} defaultPage={rows.page ?? undefined} color="primary" onChange={handleChangePagination}/>
                     </Stack>
                 </div>
             }
