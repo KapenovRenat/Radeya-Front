@@ -23,3 +23,23 @@ export interface Product {
     pages: number | null |  undefined,
     items: Array<ProductItem>,
 }
+
+export interface ProductItemKM {
+    id: string;
+    article: string;
+    name: string;
+    isActiveKaspi?: string;
+    storeId?: string;
+    storeOrder?: string;
+    currentPrice?: number;
+    previewImgUrl?: string;
+    updatedAt: string;
+}
+
+export interface ProductKM {
+    page: number | null,
+    limit: number | null | undefined,
+    total: number | null | undefined,
+    pages: number | null |  undefined,
+    items: Array<ProductItemKM>,
+}

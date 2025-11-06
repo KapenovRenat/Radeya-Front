@@ -8,51 +8,105 @@ import DashboardProducts from "@/layout/dashboard-products";
 import RandomazeBlock from "@/layout/randomaze-block";
 import Link from "next/link";
 import { Button } from "@mui/material";
-import {getProducts, syncKaspiProduct} from "@/store/reducers/products/products";
+import {getProducts, syncKaspiProduct, getKaspiProduct} from "@/store/reducers/products/products";
+import {parseLine} from "@/utils/parseNameProduct";
+import {formatPriceKZT} from "@/utils/formatPriceKZT";
+import CircleColor from "@/components/cicleColor";
+import SendIcon from '@mui/icons-material/Send';
+import TextField from '@mui/material/TextField';
+import TableRowComponent from 'components/table/tableRow';
 
 function Dashboard(props: any) {
     const user = useSelector((state: RootState) => state.auth.user);
     const productsSklad = useSelector((state: RootState) => state.products.product);
-    const {loadingProductKaspi, msgProductKaspi} = useSelector((state: RootState) => state.products);
+    const productsKaspi = useSelector((state: RootState) => state.products.productKM);
+    const {loadingProductKaspi, msgProductKaspi, loading, loadingProductKaspiData} = useSelector((state: RootState) => state.products);
+    const [search, setSearch] = useState<string>('');
+
+
+    function searchProduct(e: React.ChangeEvent<HTMLInputElement>) {
+        setSearch(e.target.value);
+    }
+
+    function getListProduct(page?: number) {
+        dispatch(getProducts({page: page ? page : productsSklad.page ?? 1, limit: 10, search}))
+            .unwrap()
+            .then((data) => {
+                // console.log("✅ Data:", data);
+            })
+            .catch(() => {
+                // console.log("❌ Не авторизован");
+                // например router.push("/login");
+            });
+    }
+
+    function getListKaspiProduct(page?: number) {
+        dispatch(getKaspiProduct({page: page ? page : productsKaspi.page ?? 1, limit: 10, search}))
+            .unwrap()
+            .then((data) => {
+                console.log("✅ Data Kaspi:", data);
+            })
+            .catch(() => {
+                console.log("❌ Данные не полученны!");
+                // например router.push("/login");
+            });
+    }
+
+    function searchSubmit() {
+        getListProduct(1);
+    }
 
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
 
+    // залогинен ли
     useEffect(() => {
         dispatch(fetchMe())
             .unwrap()
             .then((user) => {
-                console.log("✅ Авторизован:", user);
+                // console.log("✅ Авторизован:", user);
             })
             .catch(() => {
-                console.log("❌ Не авторизован");
+                // console.log("❌ Не авторизован");
                 // например router.push("/login");
             });
     }, [dispatch, router]);
 
+    // Получает продукты моего склада
     useEffect(() => {
         dispatch(getProducts({page: 1, limit: 10}))
             .unwrap()
             .then((data) => {
-                console.log("✅ Data:", data);
+                // console.log("✅ Data:", data);
             })
             .catch(() => {
-                console.log("❌ Не авторизован");
+                // console.log("❌ Не авторизован");
                 // например router.push("/login");
             });
+
+        getListKaspiProduct(1)
     }, []);
+
 
     function submitUpdateKaspiProducts() {
         dispatch(syncKaspiProduct({}))
             .unwrap()
             .then((data) => {
-                console.log("✅ Data:", data);
+                // console.log("✅ Data:", data);
             })
             .catch(() => {
-                console.log("❌ Не вышло");
+                // console.log("❌ Не вышло");
                 // например router.push("/login");
             });
     }
+
+    const handleChangePaginationSklad = (event: React.ChangeEvent<unknown>, value: number) => {
+        if (!loading && productsSklad.page !== value) getListProduct(value);
+    };
+
+    const handleChangePaginationKaspi = (event: React.ChangeEvent<unknown>, value: number) => {
+        if (!loading && productsKaspi.page !== value) getListKaspiProduct(value);
+    };
 
     const rowsNamesSklad = [
         'Цвет',
@@ -65,6 +119,96 @@ function Dashboard(props: any) {
         'Ссылка Каспи',
     ];
 
+    const columnsSklad = productsSklad.items.length <= 0 ? [] : productsSklad.items.map((item: any) => {
+        const {
+            name,
+            upholstery,
+            sizeCm,
+            colors,
+            fabrics,
+        } = parseLine(item.name);
+
+        return {
+            id: item._id,
+            name,
+            upholstery,
+            sizeCm,
+            colors,
+            fabrics,
+            article: item.article,
+            kaspiPrice: formatPriceKZT(item.kaspiPrice),
+            kaspiLink: item.kaspiLink
+        }
+    });
+
+    const productsSkladTable = {
+        columns: columnsSklad.map((item: any) => {
+            const rowItem = [
+                <CircleColor title={item?.colors && item?.colors.length > 0 ? item?.colors?.join(", ") : 'Неизвестно'}/>,
+                item.name,
+                item?.fabrics && item?.fabrics.length > 0 ? item?.fabrics?.join(", ") : '',
+                item.upholstery ? item.upholstery : '',
+                item.sizeCm ? `${item.sizeCm} см` : '',
+                item.article ? item.article : '',
+                item.kaspiPrice ? formatPriceKZT(item.kaspiPrice) : '',
+                item.kaspiLink ? <a href={item.kaspiLink} target="_blank">Каспи</a> : ''
+            ]
+
+            return (
+                <TableRowComponent key={item.id} data={rowItem}/>
+            )
+        }),
+        ...productsSklad
+    }
+
+    const rowsNamesKaspi = [
+        'Изображение',
+        'Артикул',
+        'Название',
+        'Цена',
+        'Склад',
+        'Кол-во Дней',
+    ];
+
+    const columnsKaspi = productsKaspi.items.length <= 0 ? [] : productsKaspi.items.map((item: any) => {
+        const {
+            name,
+            upholstery,
+            sizeCm,
+            colors,
+            fabrics,
+        } = parseLine(item.name);
+
+        return {
+            id: item._id,
+            name,
+            article: item.articl,
+            kaspiPrice: formatPriceKZT(item.currentPrice),
+            imgUrl: item.previewImgUrl,
+            storeId: item.storeId,
+            storeOrder: item.storeOrder,
+        }
+    });
+
+    const productsKaspiTable = {
+        columns: columnsKaspi.map((item: any) => {
+            const rowItem = [
+                item.imgUrl ? <img src={item.imgUrl} alt="kaspi-image" className="table-img"/> : '-',
+                item.article ? item.article : '',
+                item.name ? item.name : '',
+                item.kaspiPrice ? item.kaspiPrice : '',
+                item.storeId ? item.storeId : '',
+                item.storeOrder ? item.storeOrder : '',
+            ]
+
+            return (
+                <TableRowComponent key={item.id} data={rowItem}/>
+            )
+        }),
+        ...productsKaspi
+    }
+
+
     return (
         <div className="container">
             <div className="dashboard">
@@ -74,67 +218,6 @@ function Dashboard(props: any) {
 
                 <Button onClick={()=> router.push('/dashboard/create-product', undefined, { shallow: true })}>Добавить Товар</Button>
 
-                <div className="dashboard__panel">
-                    <h2>Учет заказов</h2>
-
-                    <div className="dashboard__columns">
-                        <div className="dashboard__columns_col">
-                            <h6>Каспи Магазин</h6>
-
-                            <div className="dashboard__columns_col-content">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="dashboard__columns_col">
-                            <h6>NCity</h6>
-
-                            <div className="dashboard__columns_col-content">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="dashboard__columns_col">
-                            <h6>Артем</h6>
-
-                            <div className="dashboard__columns_col-content">
-
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Октябрь</h5>
-                                        <div className="card-body_details">
-                                            <p><b>кол-во заказов:</b> 100</p>
-                                            <p><b>кол-во отмен:</b> 10</p>
-                                            <p><b>Выручка:</b> 27,050,900 тенге</p>
-                                        </div>
-                                        <a href="#" className="btn btn-primary">Смотреть</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
 
                 <RandomazeBlock />
 
@@ -143,9 +226,70 @@ function Dashboard(props: any) {
                         Обновить католог с Каспи
                     </Button>
                 </div>
-                {/*<DashboardProducts title={'Товары с Каспи'} type={'my-sklad'} columsNames={rowsNamesSklad} rows={productsSklad}/>*/}
 
-                <DashboardProducts title={'Товары из Мой Склад'} type={'my-sklad'} columsNames={rowsNamesSklad} rows={productsSklad}/>
+                <DashboardProducts
+                    title={'Товары Каспи'}
+                    type={'kaspi-table'}
+                    columnsNames={rowsNamesKaspi}
+                    dataTable={productsKaspiTable}
+                    loading={loadingProductKaspiData}
+                    handleChangePagination={handleChangePaginationKaspi}
+                >
+                    {
+                        (productsSkladTable.items.length <= 0 && loading) || productsSkladTable.total === 0 ? <></> : <div className="input-group">
+                            <TextField
+                                className="search-input"
+                                required
+                                id="outlined-required"
+                                label="Название или артикул"
+                                defaultValue="Название или артикул"
+                                value={search} onChange={searchProduct}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && search.length !== 0 && !loading) {
+                                        e.preventDefault(); // чтобы форма не перезагружалась
+                                        searchSubmit();
+                                    }
+                                }}
+                            />
+
+                            <Button onClick={searchSubmit} variant="contained" endIcon={<SendIcon />} disabled={loading}>
+                                Поиск
+                            </Button>
+                        </div>
+                    }
+                </DashboardProducts>
+
+                <DashboardProducts
+                    title={'Товары из Мой Склад'}
+                    type={'my-sklad'}
+                    columnsNames={rowsNamesSklad}
+                    dataTable={productsSkladTable}
+                    loading={loading}
+                    handleChangePagination={handleChangePaginationSklad}
+                >
+                    {
+                        (productsSkladTable.items.length <= 0 && loading) || productsSkladTable.total === 0 ? <></> : <div className="input-group">
+                            <TextField
+                                className="search-input"
+                                required
+                                id="outlined-required"
+                                label="Название или артикул"
+                                defaultValue="Название или артикул"
+                                value={search} onChange={searchProduct}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && search.length !== 0 && !loading) {
+                                        e.preventDefault(); // чтобы форма не перезагружалась
+                                        searchSubmit();
+                                    }
+                                }}
+                            />
+
+                            <Button onClick={searchSubmit} variant="contained" endIcon={<SendIcon />} disabled={loading}>
+                                Поиск
+                            </Button>
+                        </div>
+                    }
+                </DashboardProducts>
 
             </div>
         </div>

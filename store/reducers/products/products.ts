@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiAxis from "@/utils/axios";
-import {Product} from "@/types/products/products";
+import {Product, ProductKM} from "@/types/products/products";
 
 export interface ProductsState {
     product: Product;
+    productKM: ProductKM;
     loading: boolean;
     loadingProductKaspi: boolean;
     msgProductKaspi: string | null;
@@ -13,7 +14,14 @@ export interface ProductsState {
 const initialState: ProductsState = {
     product: {
         page: 1,
-        limit: 20,
+        limit: 10,
+        total: 0,
+        pages: 0,
+        items: [],
+    },
+    productKM: {
+        page: 1,
+        limit: 10,
         total: 0,
         pages: 0,
         items: [],
@@ -21,6 +29,7 @@ const initialState: ProductsState = {
     loading: false,
     loadingProductKaspi: false,
     msgProductKaspi: null,
+    loadingProductKaspiData: false,
     error: null,
 };
 
@@ -54,6 +63,21 @@ export const syncKaspiProduct = createAsyncThunk<
     }
 });
 
+// 🟢 Асинхронный thunk: Получение товаров Каспи
+export const getKaspiProduct = createAsyncThunk<
+    ProductKM, // что вернём
+    { page: number; limit: number, search?: string }, // аргументы
+    { rejectValue: string } // ошибка
+>("/get-kaspi-product", async ({ page, limit, search }, { rejectWithValue }) => {
+    try {
+        const res = await apiAxis.post("/products/get-kaspi-product", { page, limit, search });
+
+        return res.data as ProductKM;
+    } catch (err: any) {
+        return rejectWithValue(err.response?.data?.message || "Ошибка Получения Товаров Каспи");
+    }
+});
+
 // 🧩 Slice
 const productsSlice = createSlice({
     name: "products",
@@ -83,7 +107,19 @@ const productsSlice = createSlice({
             })
             .addCase(syncKaspiProduct.rejected, (state, action) => {
                 state.loadingProductKaspi = false;
-                state.error = action.payload ?? "Не удалось получить товары с Каспи";
+                state.error = action.payload ?? "Синхронизация не удалась!";
+            })
+            .addCase(getKaspiProduct.pending, (state) => {
+                state.loadingProductKaspiData = true;
+                state.error = null;
+            })
+            .addCase(getKaspiProduct.fulfilled, (state, action) => {
+                state.loadingProductKaspiData = false;
+                state.productKM = action.payload;
+            })
+            .addCase(getKaspiProduct.rejected, (state, action) => {
+                state.loadingProductKaspiData = false;
+                state.error = action.payload ?? "Не удалось получить товары с Каспи!";
             })
     },
 });
