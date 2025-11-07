@@ -105,7 +105,8 @@ function Dashboard(props: any) {
     };
 
     const handleChangePaginationKaspi = (event: React.ChangeEvent<unknown>, value: number) => {
-        if (!loading && productsKaspi.page !== value) getListKaspiProduct(value);
+        console.log(value);
+        if (!loadingProductKaspi && productsKaspi.page !== value) getListKaspiProduct(value);
     };
 
     const rowsNamesSklad = [
@@ -182,7 +183,7 @@ function Dashboard(props: any) {
         return {
             id: item._id,
             name,
-            article: item.articl,
+            article: item.article,
             kaspiPrice: formatPriceKZT(item.currentPrice),
             imgUrl: item.previewImgUrl,
             storeId: item.storeId,
@@ -234,6 +235,7 @@ function Dashboard(props: any) {
                     dataTable={productsKaspiTable}
                     loading={loadingProductKaspiData}
                     handleChangePagination={handleChangePaginationKaspi}
+                    heightTable={700}
                 >
                     {
                         (productsSkladTable.items.length <= 0 && loading) || productsSkladTable.total === 0 ? <></> : <div className="input-group">
@@ -266,6 +268,7 @@ function Dashboard(props: any) {
                     dataTable={productsSkladTable}
                     loading={loading}
                     handleChangePagination={handleChangePaginationSklad}
+                    heightTable={500}
                 >
                     {
                         (productsSkladTable.items.length <= 0 && loading) || productsSkladTable.total === 0 ? <></> : <div className="input-group">

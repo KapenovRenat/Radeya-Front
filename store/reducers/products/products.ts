@@ -8,6 +8,7 @@ export interface ProductsState {
     loading: boolean;
     loadingProductKaspi: boolean;
     msgProductKaspi: string | null;
+    loadingProductKaspiData: boolean;
     error: string | null;
 }
 

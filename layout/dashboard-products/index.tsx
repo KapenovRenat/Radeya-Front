@@ -15,10 +15,12 @@ interface Props {
     title: string;
     loading?: boolean;
     handleChangePagination?: (event: React.ChangeEvent<unknown>, value: number) => void;
+    heightTable?: number;
+    widthTable?: number | null;
 }
 
 function DashboardProducts(props: Props) {
-    const { dataTable, columnsNames, title, loading, children, handleChangePagination, type } = props;
+    const { dataTable, columnsNames, title, loading, children, handleChangePagination, type, heightTable = 700, widthTable } = props;
 
     return (
         <div className="dashboard_products" id={type}>
@@ -29,7 +31,7 @@ function DashboardProducts(props: Props) {
             {
                 (dataTable.items.length <= 0 && loading) || dataTable.total === 0 ? <div style={{marginTop: '20px'}}><CircularProgress /></div> :
                     <>
-                        <TableComponent tableId="products" rowsNames={columnsNames} >
+                        <TableComponent tableId="products" rowsNames={columnsNames} heightTable={heightTable} widthTable={widthTable}>
                             {dataTable.columns}
                         </TableComponent>
                 </>

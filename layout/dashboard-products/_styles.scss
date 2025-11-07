@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  margin: 50px 0;
 
   .table-img{
     width: 100px;
@@ -17,9 +18,9 @@
   }
 
   .input-group {
-    width: 400px;
     margin-bottom: 20px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 350px 150px;
     align-items: normal;
     gap: 10px;
 

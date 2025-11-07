@@ -11,16 +11,18 @@ import Paper from '@mui/material/Paper';
 interface Props {
     rowsNames: string[];
     children?: React.ReactNode;
-    tableId: string
+    tableId: string;
+    heightTable: number;
+    widthTable?: number | null;
 }
 
 function TableComponent(props: Props) {
-    const {children, rowsNames, tableId} = props;
+    const {children, rowsNames, tableId, heightTable, widthTable} = props;
 
     return (
         <>
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <TableContainer component={Paper} sx={{height: heightTable, width: widthTable ? widthTable : '100%'}}>
+                <Table sx={{ minWidth: 650, maxHeight: 400 }} aria-label="simple table">
                     <TableHead>
                         <TableRow>
                             {rowsNames.map((name, index) => (
