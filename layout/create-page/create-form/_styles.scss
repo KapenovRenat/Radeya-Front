@@ -1,0 +1,15 @@
+.create-product-page__form {
+
+  h4 {
+    margin-bottom: 20px;
+  }
+  &-input {
+
+  }
+
+  .page__form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 20px;
+  }
+}
