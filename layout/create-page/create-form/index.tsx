@@ -2,6 +2,46 @@ import React, {useEffect, useRef, useState} from 'react';
 import apiAxis from "@/utils/axios";
 import CustomSelect from "@/components/custom-select";
 
+// Маппинг по последней части кода после *
+const FIELD_LABELS: Record<string, string> = {
+    'Type': 'Тип',
+    'Folding design': 'Наличие механизма трансформации',
+    'Shape': 'Форма',
+    'Transformation mechanism': 'Механизм трансформации',
+    'Upholstery': 'Обивка',
+    'Features': 'Особенности',
+    'Filler': 'Наполнение',
+    'Rigidity': 'Жесткость',
+    'Width': 'Ширина',
+    'Depth': 'Глубина',
+    'Height': 'Высота',
+    'Sleeping place': 'Спальное место',
+    'Length when unfolded': 'Длина в разложенном виде',
+    'Armrests': 'Подлокотники',
+    'Number of seats': 'Количество мест',
+    'Application': 'Назначение',
+    'Design': 'Дизайн',
+    'Furniture assembly': 'Сборка мебели',
+    'Furniture legs': 'Ножки',
+    'Decorative pillows': 'Декоративные подушки',
+    'linen box': 'Бельевой ящик',
+    'Additional': 'Дополнительно',
+    'Model': 'Модель',
+    'View': 'Вид',
+    'Color': 'Цвет',
+    'Texture': 'Текстура',
+    'Country': 'Страна производства',
+};
+
+// Функция, которая принимает code (например "Sofas*Type") и возвращает название
+export function getFieldLabel(code: string): string {
+    // Берём всё после последней звёздочки
+    const key = code.split('*').pop()?.trim() || '';
+
+    // Возвращаем перевод, если есть
+    return FIELD_LABELS[key] || key;
+}
+
 interface Props {
     selectedCategory: { code: string, title: string };
 }
@@ -2782,7 +2822,7 @@ function CreateForm(props: Props) {
 
                         if (item.type === "enum") {
                             return <div className="create-product-page__form-input">
-                                <p>Поле {index} {item.mandatory ? <b style={{color: 'red'}}>*</b> : null} {item.multiValued ? '+' : ''}</p>
+                                <p>{getFieldLabel(item.code)} {item.mandatory ? <b style={{color: 'red'}}>*</b> : null} {item.multiValued ? '+' : ''}</p>
                                 <CustomSelect
                                     options={item.values.map((v: any, index: number) => {
                                         return {
