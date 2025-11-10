@@ -81,8 +81,6 @@ function CreateForm(props: Props) {
         const filterMandatory = categoryAttr.filter((x) => x.mandatory);
 
         const hasEmpty = filterMandatory.some((item) => !item.selected);
-        const hasEmpty2 = filterMandatory.filter((item) => !item.selected);
-        console.log(hasEmpty2)
 
         return hasEmpty;
     }
@@ -163,7 +161,7 @@ function CreateForm(props: Props) {
         if (key === 'Color') return key;
     }) : null;
 
-    // console.log(categoryAttr)
+    console.log(colorField)
 
     return (
         <div className="create-product-page__form">
@@ -307,6 +305,7 @@ function CreateForm(props: Props) {
                                 style={{
                                     marginTop: '10px'
                                 }}
+                                disabled={true}
                             >
                                 Сгенерировать Описание AI <br/>
                             </Button>
@@ -336,28 +335,37 @@ function CreateForm(props: Props) {
                                             <h3>Цвет: <b>{v.name}</b></h3>
                                             <div className="items-item_buttons">
                                                 <ImageUploader handleSelectImage={(images, previews) => {
-                                                    setCategoryAttr(prev => {
-                                                        return prev.map(item => {
-                                                            if (item.code === colorField.code) {
-                                                                if (item.selected && item.selected.length > 0 ) {
-                                                                    return {
-                                                                        ...item,
-                                                                        selected: item.selected.map((im: any) => {
-                                                                            if (im.code === v.code) {
-                                                                                return {
-                                                                                    ...im,
-                                                                                    images: im.images && im.images.length > 0 ? [...im.images, ...images] : images,
-                                                                                    prwImages: im.prwImages && im.prwImages.length > 0 ? [...im.prwImages, ...previews] : previews,
-                                                                                }
-                                                                            }
-                                                                        }),
-                                                                    }
-                                                                }
+                                                    setCategoryAttr((prev) =>
+                                                        prev.map((item: any) => {
+                                                            // другие атрибуты не трогаем
+                                                            if (item.code !== colorField.code) {
+                                                                return item;
                                                             }
 
-                                                            return item;
+                                                            // если selected нет или он не массив
+                                                            if (!Array.isArray(item.selected)) {
+                                                                return item;
+                                                            }
+
+                                                            const newSelected = item.selected.map((sel: any) => {
+                                                                // это не тот цвет, который мы сейчас обновляем
+                                                                if (!sel || sel.code !== v.code) {
+                                                                    return sel; // ОБЯЗАТЕЛЬНО вернуть sel
+                                                                }
+
+                                                                return {
+                                                                    ...sel,
+                                                                    images: [...(sel.images ?? []), ...images],
+                                                                    prvImages: [...(sel.prvImages ?? []), ...previews],
+                                                                };
+                                                            });
+
+                                                            return {
+                                                                ...item,
+                                                                selected: newSelected,
+                                                            };
                                                         })
-                                                    });
+                                                    );
                                                 }}/>
                                                 <Button
                                                     onClick={() => {
@@ -379,29 +387,25 @@ function CreateForm(props: Props) {
                                                     Удалить цвет
                                                 </Button>
                                             </div>
-                                            <PreviewsImages previews={v.prwImages} removeImage={(i) => {
-                                                setCategoryAttr(prev => {
-                                                    return prev.map(item => {
-                                                        if (item.code === colorField.code) {
-                                                            if (item.selected && item.selected.length > 0 ) {
-                                                                return {
-                                                                    ...item,
-                                                                    selected: item.selected.map((im: any) => {
-                                                                        if (im.code === v.code) {
-                                                                            return {
-                                                                                ...im,
-                                                                                images: im.images.filter((rv:any, index: number) => index !== i),
-                                                                                prwImages: im.prwImages.filter((rv:any, index: number) => index !== i),
-                                                                            }
-                                                                        }
-                                                                    }),
-                                                                }
-                                                            }
-                                                        }
+                                            <PreviewsImages previews={v.prvImages} removeImage={(i) => {
+                                                setCategoryAttr((prev) =>
+                                                    prev.map((item: any) => {
+                                                        if (item.code !== colorField.code) return item;
+                                                        if (!Array.isArray(item.selected)) return item;
 
-                                                        return item;
+                                                        const newSelected = item.selected.map((sel: any) => {
+                                                            if (!sel || sel.code !== v.code) return sel;
+
+                                                            return {
+                                                                ...sel,
+                                                                images: sel.images?.filter((_: any, idx: number) => idx !== i) ?? [],
+                                                                prvImages: sel.prvImages?.filter((_: any, idx: number) => idx !== i) ?? [],
+                                                            };
+                                                        });
+
+                                                        return { ...item, selected: newSelected };
                                                     })
-                                                });
+                                                );
                                             }}/>
                                         </div>
                                     )
@@ -428,7 +432,7 @@ function CreateForm(props: Props) {
                                         code: option.value,
                                         name: option.label,
                                         images: [],
-                                        prwImages: []
+                                        prvImages: []
                                     },
                                     multiValued: colorField.multiValued,
                                     mandatory: colorField.mandatory
