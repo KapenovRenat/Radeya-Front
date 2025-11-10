@@ -1,0 +1,17 @@
+.previews-images {
+  padding: 20px 0;
+  border-bottom: 1px solid #333333;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .img-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  }
+}

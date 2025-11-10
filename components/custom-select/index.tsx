@@ -64,7 +64,10 @@ function CustomSelect(props: Props) {
 
                     <div className="custom-select_options-items">
                         {filtered.map((option, index) => (
-                            <div key={option.value} className="custom-select-item" onClick={() => onClick(option)}>
+                            <div key={option.value} className="custom-select-item" onClick={() => {
+                                setIsOpen(false)
+                                onClick(option);
+                            }}>
                                 <p>{option.label}</p>
                             </div>
                         ))}

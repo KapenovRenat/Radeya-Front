@@ -5,11 +5,62 @@
   }
   &-input {
 
+    .input-cust {
+      width: 100%;
+      height: 42px;
+
+      div {
+        height: 100%;
+
+        input {
+          padding: 0 10px !important;
+        }
+      }
+    }
+
   }
 
   .page__form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-gap: 20px;
+  }
+
+  .other-product-create {
+    display: grid;
+    grid-template-columns: 600px 1fr;
+    grid-gap: 20px;
+    margin: 20px 0;
+
+    .create-deskription {
+      width: 100%;
+
+      .create-product-page__form-input {
+        div, textarea {
+          width:  100%;
+        }
+      }
+    }
+
+    .create-colors-product {
+      &_title {
+        width: 300px;
+        margin-top: 20px;
+        button {
+          margin-top: 10px;
+        }
+      }
+
+      .items-item_buttons {
+        width: 450px;
+        gap: 10px;
+        display: flex;
+      }
+    }
+  }
+
+  .btn-submit-create {
+    background: red;
+    color: white;
   }
 }
