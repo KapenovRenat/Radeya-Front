@@ -5,11 +5,10 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import {mockFieldSofas} from "@/utils/mockField";
 import ImageUploader from "@/components/uploadImage/uploadImg";
 import PreviewsImages from "@/components/uploadImage/preview-images";
-import previewImages from "@/components/uploadImage/preview-images";
 import axios from 'axios';
+import SaveIcon from '@mui/icons-material/Save';
 
 // Маппинг по последней части кода после *
 const FIELD_LABELS: Record<string, string> = {
@@ -41,6 +40,7 @@ const FIELD_LABELS: Record<string, string> = {
     'Color': 'Цвет',
     'Texture': 'Текстура',
     'Country': 'Страна производства',
+    'korobs': 'Кол-во коробок',
 };
 
 // Функция, которая принимает code (например "Sofas*Type") и возвращает название
@@ -63,6 +63,7 @@ function CreateForm(props: Props) {
     const [categoryAttr, setCategoryAttr] = useState<any[]>([]);
     const [colorAttr, setColorAttr] = useState<any[]>([]);
     const [colorValues, setColorValues] = useState<any>(null);
+    const [isPendingCreate, setIsPendingCreate] = useState<boolean>(false);
 
     useEffect(() => {
         if (!selectedCategory) return;
@@ -78,9 +79,8 @@ function CreateForm(props: Props) {
         } catch (e) {}
     }
 
-    console.log(categoryAttr)
-
     async function createProduct() {
+        setIsPendingCreate(true);
         try {
             const formData = new FormData();
             formData.append("brand", 'RADEYA');
@@ -119,12 +119,15 @@ function CreateForm(props: Props) {
             formData.append("categoryAttr", JSON.stringify(cleanedAttrs));
 
             // Отправляем на сервер
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/products/create-kaspi-product`, formData, {
+            const resForm = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/products/create-kaspi-product`, formData, {
                 withCredentials: true,
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            console.log(res.data)
+
+            console.log(resForm.data)
+            setIsPendingCreate(false);
         } catch (e) {
+            setIsPendingCreate(false);
             console.log('Ошибка отправки: ', e)
         }
     }
@@ -163,6 +166,35 @@ function CreateForm(props: Props) {
                     "values": ""
                 }
 
+                const newFieldKorob = {
+                    "code": "korobs",
+                    "type": "enum",
+                    "multiValued": false,
+                    "mandatory": false,
+                    "values": [
+                        {
+                            code: 1,
+                            name: '1 Коробка'
+                        },
+                        {
+                            code: 2,
+                            name: '2 Коробка'
+                        },
+                        {
+                            code: 3,
+                            name: '3 Коробка'
+                        },
+                        {
+                            code: 4,
+                            name: '4 Коробка'
+                        },
+                        {
+                            code: 5,
+                            name: '5 Коробка'
+                        }
+                    ]
+                }
+
                 // const colors = mockFieldSofas.find(item => {
                 //     const key = item.code.split('*').pop()?.trim() || '';
                 //
@@ -177,7 +209,7 @@ function CreateForm(props: Props) {
 
                 setColorAttr([...colors?.values as any]);
 
-                setCategoryAttr([newField, newFieldDesk, ...fileldsRes]);
+                setCategoryAttr([newField, newFieldDesk, ...fileldsRes, newFieldKorob]);
                 setLoadFields(false);
             }
         } catch (err: any) {
@@ -368,7 +400,14 @@ function CreateForm(props: Props) {
                                         Сгенерировать Описание AI <br/>
                                     </Button>
 
-                                    <Button
+                                    {isPendingCreate ? <Button
+                                        loading
+                                        variant="outlined"
+                                        loadingPosition="end"
+                                        startIcon={<SaveIcon />}
+                                    >
+                                        Идет загрузка!
+                                    </Button> : <Button
                                         onClick={() => createProduct()}
                                         variant="contained"
                                         style={{
@@ -378,7 +417,7 @@ function CreateForm(props: Props) {
                                         disabled={getDisabledCreateBtn()}
                                     >
                                         Создать товар
-                                    </Button>
+                                    </Button>}
                                 </div>
                             </div>
                         </div>
