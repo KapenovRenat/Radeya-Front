@@ -43,6 +43,7 @@ function CreateProductPage(props: Props) {
     }, []);
 
     async function submitSearchCategory() {
+
         await getCategories(1);
     }
 
@@ -144,7 +145,8 @@ function CreateProductPage(props: Props) {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchCategory.length !== 0 && !isLoadCategory) {
                                     e.preventDefault(); // чтобы форма не перезагружалась
-                                    submitSearchCategory();
+                                    // submitSearchCategory(categories.page);
+                                    getCategories(categories.page);
                                 }
                             }}
                         />

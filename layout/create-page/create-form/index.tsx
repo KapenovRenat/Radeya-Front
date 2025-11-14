@@ -147,7 +147,12 @@ function CreateForm(props: Props) {
                 const res = await apiAxis.post("/products/get-fields-kaspi-product", {
                     categoryCode: selectedCategory.code,
                 });
+
+
                 const fileldsRes = res.data.fields;
+                console.log({
+                    fileldsRes
+                })
 
 
                 const newField = {
@@ -207,7 +212,14 @@ function CreateForm(props: Props) {
                     if (key === 'Color') return key;
                 });
 
-                setColorAttr([...colors?.values as any]);
+                console.log({
+                    colors
+                })
+
+                if (colors) {
+                    setColorAttr([...colors?.values as any]);
+                }
+
 
                 setCategoryAttr([newField, newFieldDesk, ...fileldsRes, newFieldKorob]);
                 setLoadFields(false);
