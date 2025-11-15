@@ -15,6 +15,7 @@ import CircleColor from "@/components/cicleColor";
 import SendIcon from '@mui/icons-material/Send';
 import TextField from '@mui/material/TextField';
 import TableRowComponent from 'components/table/tableRow';
+import { usePathname } from 'next/navigation';
 
 function Dashboard(props: any) {
     const user = useSelector((state: RootState) => state.auth.user);
@@ -22,6 +23,9 @@ function Dashboard(props: any) {
     const productsKaspi = useSelector((state: RootState) => state.products.productKM);
     const {loadingProductKaspi, msgProductKaspi, loading, loadingProductKaspiData} = useSelector((state: RootState) => state.products);
     const [search, setSearch] = useState<string>('');
+    const dispatch = useDispatch<AppDispatch>();
+    const router = useRouter();
+    const pathname = usePathname();
 
 
     function searchProduct(e: React.ChangeEvent<HTMLInputElement>) {
@@ -55,9 +59,6 @@ function Dashboard(props: any) {
     function searchSubmit() {
         getListProduct(1);
     }
-
-    const dispatch = useDispatch<AppDispatch>();
-    const router = useRouter();
 
     // залогинен ли
     useEffect(() => {
@@ -130,7 +131,7 @@ function Dashboard(props: any) {
         } = parseLine(item.name);
 
         return {
-            id: item._id,
+            _id: item._id,
             name,
             upholstery,
             sizeCm,
@@ -156,7 +157,7 @@ function Dashboard(props: any) {
             ]
 
             return (
-                <TableRowComponent key={item.id} data={rowItem}/>
+                <TableRowComponent key={item._id} data={rowItem}/>
             )
         }),
         ...productsSklad
@@ -174,14 +175,10 @@ function Dashboard(props: any) {
     const columnsKaspi = productsKaspi.items.length <= 0 ? [] : productsKaspi.items.map((item: any) => {
         const {
             name,
-            upholstery,
-            sizeCm,
-            colors,
-            fabrics,
         } = parseLine(item.name);
 
         return {
-            id: item._id,
+            _id: item._id,
             name,
             article: item.article,
             kaspiPrice: formatPriceKZT(item.currentPrice),
@@ -203,7 +200,10 @@ function Dashboard(props: any) {
             ]
 
             return (
-                <TableRowComponent key={item.id} data={rowItem}/>
+                <TableRowComponent key={item._id} data={rowItem} cursorActive={true} onClick={(value) => {
+                    const findItem = productsKaspi.items.find((itemNew: any) => itemNew._id === item._id);
+                    if (findItem) router.push(`${pathname}/product/${findItem.uniqueCode ? findItem.uniqueCode : findItem._id}`);
+                }}/>
             )
         }),
         ...productsKaspi

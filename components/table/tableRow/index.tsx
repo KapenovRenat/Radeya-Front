@@ -22,7 +22,6 @@ const TableRowComponent = (props: Props) => {
             >
                 {data.map((item, index) => <TableCell component="th" scope="row" >{item !== null && item !== undefined && item !== '' ? item : '-'}</TableCell>)}
             </TableRow>
-
             {/*<tr key={key}>*/}
             {/*    {*/}
             {/*        data.map((item, index) => <td>{item !== null && item !== undefined && item !== '' ? item : '-'}</td>)*/}

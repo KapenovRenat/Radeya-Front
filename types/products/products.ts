@@ -25,7 +25,7 @@ export interface Product {
 }
 
 export interface ProductItemKM {
-    id: string;
+    _id: string;
     article: string;
     name: string;
     isActiveKaspi?: string;
@@ -34,6 +34,7 @@ export interface ProductItemKM {
     currentPrice?: number;
     previewImgUrl?: string;
     updatedAt: string;
+    uniqueCode?: string
 }
 
 export interface ProductKM {

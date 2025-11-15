@@ -9,6 +9,7 @@ import ImageUploader from "@/components/uploadImage/uploadImg";
 import PreviewsImages from "@/components/uploadImage/preview-images";
 import axios from 'axios';
 import SaveIcon from '@mui/icons-material/Save';
+import { useRouter } from 'next/router';
 
 // Маппинг по последней части кода после *
 const FIELD_LABELS: Record<string, string> = {
@@ -64,6 +65,7 @@ function CreateForm(props: Props) {
     const [colorAttr, setColorAttr] = useState<any[]>([]);
     const [colorValues, setColorValues] = useState<any>(null);
     const [isPendingCreate, setIsPendingCreate] = useState<boolean>(false);
+    const router = useRouter();
 
     useEffect(() => {
         if (!selectedCategory) return;
@@ -124,11 +126,13 @@ function CreateForm(props: Props) {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
-            console.log(resForm.data)
-            setIsPendingCreate(false);
+            if (resForm.data.message === 'UPLOADED') {
+                alert('Товар загружен! Ожидайте ответа от каспи!');
+                router.push('/dashboard');
+            }
         } catch (e) {
             setIsPendingCreate(false);
-            console.log('Ошибка отправки: ', e)
+            alert('Ошибка отправки повторите позже!');
         }
     }
 

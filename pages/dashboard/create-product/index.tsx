@@ -83,7 +83,7 @@ function CreateProductPage(props: Props) {
 
     const columnsCategory = categories.items.length <= 0 ? [] : categories.items.map((item: any) => {
         return {
-            id: item._id,
+            _id: item._id,
             code: item.code,
             title: item.title,
         }
@@ -97,7 +97,7 @@ function CreateProductPage(props: Props) {
             ]
 
             return (
-                <TableRowComponent key={item.id} data={rowItem} cursorActive={true} onClick={selectClickCategory}/>
+                <TableRowComponent key={item._id} data={rowItem} cursorActive={true} onClick={selectClickCategory}/>
             )
         }),
         ...categories
