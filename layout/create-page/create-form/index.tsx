@@ -128,7 +128,8 @@ function CreateForm(props: Props) {
 
             if (resForm.data.message === 'UPLOADED') {
                 alert('Товар загружен! Ожидайте ответа от каспи!');
-                router.push('/dashboard');
+                setIsPendingCreate(false);
+                // router.push('/dashboard');
             }
         } catch (e) {
             setIsPendingCreate(false);
@@ -382,7 +383,7 @@ function CreateForm(props: Props) {
                     <div className="other-product-create">
                         <div className="create-deskription">
                             <div className="create-product-page__form-input">
-                                <p>Описание - (Перед этим Желательно заполнить поля) <b style={{color: 'red'}}>*</b></p>
+                                <p>Описание - (Перед этим Желательно заполнить поля) <b style={{color: 'red'}}>*</b> Кол-во символов: {categoryAttr && categoryAttr.length > 0 ? categoryAttr.find(item => item.code === "description")?.selected?.length : 0}</p>
                                 <TextField
                                     id={"product-description"}
                                     multiline
