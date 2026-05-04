@@ -29,6 +29,8 @@
     "axios": "^1.11.0",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.20",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "next": "^15.4.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

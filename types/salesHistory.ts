@@ -3,6 +3,7 @@ export interface ISalesHistoryItem {
     name: string | null;
     code: string | null;
     imageUrl: string | null;
+    volume: number | null;
     sellQty: number;
     sellSum: number;
     costSum: number;
