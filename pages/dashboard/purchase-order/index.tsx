@@ -42,11 +42,15 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 interface AiItem {
     name: string;
     code: string;
     qty: number;
+    neededQty?: number;
+    salesPerDay?: number;
+    stockQty?: number;
     deliveryDays: number;
     itemVolume: number;
     totalItemVolume: number;
@@ -74,10 +78,12 @@ function PurchaseOrderPage() {
     const [dateTo, setDateTo]       = useState<Dayjs | null>(dayjs());
     const [sortKey, setSortKey]     = useState<SortKey>('sellQty');
     const [sortDir, setSortDir]     = useState<SortDir>('desc');
-    const [truckVol, setTruckVol]         = useState<number>(35);
-    const [forecastDays, setForecastDays] = useState<number>(10);
-    const [deliveryDays, setDeliveryDays] = useState<number>(7);
-    const [destination, setDestination]   = useState<string>('Астана');
+    const [truckVol, setTruckVol]           = useState<number>(35);
+    const [forecastDays, setForecastDays]   = useState<number>(10);
+    const [deliveryDays, setDeliveryDays]   = useState<number>(3);
+    const [coverageDays, setCoverageDays]   = useState<number>(30);
+    const [minSalesPerDay, setMinSalesPerDay] = useState<number>(0.1);
+    const [destination, setDestination]             = useState<string>('Астана');
     const [page, setPage]               = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(20);
     const [aiOpen, setAiOpen]             = useState(false);
@@ -116,13 +122,13 @@ function PurchaseOrderPage() {
                         code: i.code,
                         volume: i.volume ?? 0,
                         salesPerDay: i.salesPerDay,
-                        available: i.available,
+                        available: i.stockQty,
                         profitPct: i.profitPct,
-                        daysLeft: i.salesPerDay > 0 ? +(i.available / i.salesPerDay).toFixed(1) : 9999,
+                        daysLeft: i.salesPerDay > 0 ? +(i.stockQty / i.salesPerDay).toFixed(1) : 9999,
                     }))
-                    .filter(i => i.daysLeft < (deliveryDays + forecastDays))
+                    .filter(i => i.salesPerDay > 0)
                     .map(({ daysLeft, ...rest }) => rest),
-                    params: { truckVol, forecastDays, deliveryDays, destination },
+                    params: { truckVol, forecastDays, deliveryDays, coverageDays, minSalesPerDay, destination },
                     editedItems: isReanalysis ? aiItems : undefined,
                     additionalPrompt: additionalPrompt || undefined,
                 }),
@@ -131,8 +137,40 @@ function PurchaseOrderPage() {
             const data = await res.json();
             if (data.error) { setAiError(data.error); return; }
 
-            // Сортируем по кол-ву к заказу убыванию
-            const sorted = [...(data.items ?? [])].sort((a: AiItem, b: AiItem) => b.qty - a.qty);
+            // Обогащаем из исходной таблицы по коду товара
+            const itemMap = new Map(sortedItems.map(i => [i.code, i]));
+            const priorityOf = (comment: string) =>
+                comment.startsWith("КРИТИЧНО")      ? 0 :
+                comment.startsWith("СРОЧНО")        ? 1 :
+                comment.startsWith("ДОПОЛНИТЕЛЬНО") ? 3 : 2;
+
+            // Нормализуем код: убираем суффиксы которые AI иногда добавляет (-DOZ, -ADD и т.п.)
+            const normalizeCode = (code: string) => code?.replace(/-(DOZ|ADD|EXTRA|2|3)$/i, "") ?? code;
+
+            // Дедупликация: если один код встречается дважды — оставляем с более высоким приоритетом
+            const seenCodes = new Map<string, AiItem>();
+            for (const item of (data.items ?? [])) {
+                const key = normalizeCode(item.code);
+                const existing = seenCodes.get(key);
+                if (!existing || priorityOf(item.comment ?? "") < priorityOf(existing.comment ?? "")) {
+                    // Восстанавливаем оригинальный код из исходных данных если возможно
+                    const originalCode = itemMap.has(key) ? key : item.code;
+                    seenCodes.set(key, { ...item, code: originalCode });
+                }
+            }
+
+            const sorted = [...seenCodes.values()]
+                .map((item: AiItem) => ({
+                    ...item,
+                    salesPerDay: itemMap.get(item.code)?.salesPerDay ?? 0,
+                    stockQty:    itemMap.get(item.code)?.stockQty    ?? 0,
+                }))
+                .sort((a: AiItem, b: AiItem) => {
+                    const pa = priorityOf(a.comment ?? "");
+                    const pb = priorityOf(b.comment ?? "");
+                    if (pa !== pb) return pa - pb;
+                    return b.qty - a.qty;
+                });
             setAiItems(sorted);
             setAiSummary(data.summary ?? '');
             setAiTruck(data.totalVolume != null ? { totalVolume: data.totalVolume, truckFillPct: data.truckFillPct } : null);
@@ -163,7 +201,7 @@ function PurchaseOrderPage() {
     const sortedItems = useMemo(() => {
         return [...items].map(item => ({
             ...item,
-            daysLeft: item.salesPerDay > 0 ? +(item.available / item.salesPerDay).toFixed(1) : 9999,
+            daysLeft: item.salesPerDay > 0 ? +(item.stockQty / item.salesPerDay).toFixed(1) : 9999,
         })).sort((a, b) => {
             const av = (a as any)[sortKey];
             const bv = (b as any)[sortKey];
@@ -181,7 +219,7 @@ function PurchaseOrderPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ items: aiItems, params: { truckVol, forecastDays, deliveryDays, destination }, aiTruck, aiSummary }),
+            body: JSON.stringify({ items: aiItems, params: { truckVol, forecastDays, deliveryDays, coverageDays, destination }, aiTruck, aiSummary }),
         });
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -300,7 +338,7 @@ function PurchaseOrderPage() {
                         size="small"
                     />
                     <TextField
-                        label="Кол-во дней"
+                        label="Срок изготовления, дней"
                         type="number"
                         value={forecastDays}
                         onChange={(e) => setForecastDays(Number(e.target.value))}
@@ -314,9 +352,33 @@ function PurchaseOrderPage() {
                         value={deliveryDays}
                         onChange={(e) => setDeliveryDays(Number(e.target.value))}
                         inputProps={{ min: 1 }}
-                        sx={{ width: 180 }}
+                        sx={{ width: 170 }}
                         size="small"
                     />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        <TextField
+                            label="Горизонт покрытия, дней"
+                            type="number"
+                            value={coverageDays}
+                            onChange={(e) => setCoverageDays(Number(e.target.value))}
+                            inputProps={{ min: 1 }}
+                            sx={{ width: 190 }}
+                            size="small"
+                            helperText={`Полный срок: ${forecastDays + deliveryDays} дн · Запас: ${Math.max(0, coverageDays - forecastDays - deliveryDays)} дн`}
+                        />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        <TextField
+                            label="Мин. продаж/день"
+                            type="number"
+                            value={minSalesPerDay}
+                            onChange={(e) => setMinSalesPerDay(Number(e.target.value))}
+                            inputProps={{ min: 0, step: 0.01 }}
+                            sx={{ width: 160 }}
+                            size="small"
+                            helperText={`≈ ${(minSalesPerDay * 30).toFixed(1)} шт/мес`}
+                        />
+                    </Box>
                     <FormControl size="small" sx={{ width: 160 }}>
                         <InputLabel>Куда доставлять</InputLabel>
                         <Select
@@ -336,11 +398,14 @@ function PurchaseOrderPage() {
                 {items.length > 0 && (
                     <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                         {[
-                            { label: 'Товаров',       value: total },
-                            { label: 'Сумма продаж',  value: fmt(totalSellSum) },
-                            { label: 'Себестоимость', value: fmt(totalCostSum) },
-                            { label: 'Прибыль',       value: fmt(totalProfit) },
-                            { label: 'Рентабельность',value: `${totalProfitPct}%` },
+                            { label: 'Товаров',             value: total },
+                            { label: 'Сумма продаж',        value: fmt(totalSellSum) },
+                            { label: 'Себестоимость',       value: fmt(totalCostSum) },
+                            { label: 'Прибыль',             value: fmt(totalProfit) },
+                            { label: 'Рентабельность',      value: `${totalProfitPct}%` },
+                            { label: 'Горизонт покрытия',   value: `${coverageDays} дн` },
+                            { label: 'Полный срок заказа',  value: `${forecastDays + deliveryDays} дн` },
+                            { label: 'Запас',               value: `${Math.max(0, coverageDays - forecastDays - deliveryDays)} дн` },
                         ].map(({ label, value }) => (
                             <Paper key={label} variant="outlined" sx={{ px: 2.5, py: 1.5, borderRadius: 2, minWidth: 140 }}>
                                 <Typography variant="caption" color="text.secondary">{label}</Typography>
@@ -428,9 +493,9 @@ function PurchaseOrderPage() {
 
                             <TableBody>
                                 {pagedItems.map((item, idx) => {
-                                    const daysLeft    = item.salesPerDay > 0 ? +(item.available / item.salesPerDay).toFixed(1) : null;
+                                    const daysLeft    = item.salesPerDay > 0 ? +(item.stockQty / item.salesPerDay).toFixed(1) : null;
                                     const profitColor = item.profit >= 0 ? 'success.main' : 'error.main';
-                                    const availColor  = item.available <= 0 ? 'error.main' : item.available <= 3 ? 'warning.main' : 'inherit';
+                                    const availColor  = item.stockQty <= 0 ? 'error.main' : item.stockQty <= 3 ? 'warning.main' : 'inherit';
                                     const daysColor   = daysLeft === null ? 'text.secondary'
                                         : daysLeft <= 7  ? 'error.main'
                                         : daysLeft <= 14 ? 'warning.main'
@@ -526,10 +591,18 @@ function PurchaseOrderPage() {
                                     <Table size="small" stickyHeader>
                                         <TableHead>
                                             <TableRow>
+                                                <TableCell sx={{ fontWeight: 700, width: 40 }} />
                                                 <TableCell sx={{ fontWeight: 700, minWidth: 280 }}>Наименование</TableCell>
                                                 <TableCell sx={{ fontWeight: 700 }}>Код</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 700 }}>Рент-ть</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 700, minWidth: 90 }}>Прод/день</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 700, minWidth: 80 }}>Остаток</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 700, minWidth: 120 }}>Заказать, шт</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 700, minWidth: 110, background: '#fff8e1' }}>
+                                                    <Tooltip title="Сколько нужно без учёта объёма машины">
+                                                        <span>Нужно всего</span>
+                                                    </Tooltip>
+                                                </TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 700, minWidth: 130 }}>Срок, дней</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 700 }}>Объём, м³</TableCell>
                                                 <TableCell sx={{ fontWeight: 700 }}>Комментарий</TableCell>
@@ -540,6 +613,20 @@ function PurchaseOrderPage() {
                                                 .slice(aiPage * aiRowsPerPage, aiPage * aiRowsPerPage + aiRowsPerPage)
                                                 .map((item, idx) => (
                                                     <TableRow key={`${item.code}-${idx}`} hover>
+                                                        <TableCell sx={{ p: 0, pl: 0.5 }}>
+                                                            <Tooltip title="Удалить позицию">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    onClick={() => {
+                                                                        const globalIdx = aiPage * aiRowsPerPage + idx;
+                                                                        setAiItems(prev => prev.filter((_, i) => i !== globalIdx));
+                                                                    }}
+                                                                >
+                                                                    <DeleteOutlineIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </TableCell>
                                                         <TableCell sx={{ fontSize: 12 }}>{item.name}</TableCell>
                                                         <TableCell sx={{ fontSize: 12, color: 'text.secondary' }}>{item.code}</TableCell>
                                                         <TableCell align="center">
@@ -550,6 +637,22 @@ function PurchaseOrderPage() {
                                                                 variant="outlined"
                                                                 sx={{ fontSize: 11 }}
                                                             />
+                                                        </TableCell>
+                                                        <TableCell align="center" sx={{ fontSize: 12 }}>
+                                                            <Tooltip title={`≈ ${((item.salesPerDay ?? 0) * 30).toFixed(1)} шт/мес`}>
+                                                                <Typography variant="body2" sx={{ fontSize: 12, color: (item.salesPerDay ?? 0) < 0.1 ? 'warning.main' : 'text.primary' }}>
+                                                                    {item.salesPerDay ?? 0}
+                                                                </Typography>
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            <Typography
+                                                                variant="body2"
+                                                                fontWeight={700}
+                                                                sx={{ fontSize: 12, color: (item.stockQty ?? 0) <= 0 ? 'error.main' : (item.stockQty ?? 0) <= 3 ? 'warning.main' : 'success.main' }}
+                                                            >
+                                                                {item.stockQty ?? 0}
+                                                            </Typography>
                                                         </TableCell>
                                                         <TableCell align="center">
                                                             <TextField
@@ -564,6 +667,22 @@ function PurchaseOrderPage() {
                                                                 size="small"
                                                                 sx={{ width: 90 }}
                                                             />
+                                                        </TableCell>
+                                                        <TableCell align="center" sx={{ background: '#fff8e1' }}>
+                                                            {item.neededQty != null ? (
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    fontWeight={700}
+                                                                    color={item.neededQty > item.qty ? 'warning.dark' : 'success.main'}
+                                                                >
+                                                                    {item.neededQty}
+                                                                    {item.neededQty > item.qty && (
+                                                                        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                                                                            (-{item.neededQty - item.qty})
+                                                                        </Typography>
+                                                                    )}
+                                                                </Typography>
+                                                            ) : '—'}
                                                         </TableCell>
                                                         <TableCell align="center">
                                                             <TextField
