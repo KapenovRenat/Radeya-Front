@@ -214,12 +214,42 @@ function PurchaseOrderPage() {
         [sortedItems, page, rowsPerPage]
     );
 
+    // Рекомендуемый интервал заказа
+    const orderInsights = useMemo(() => {
+        const withVol = sortedItems.filter(i => i.salesPerDay > 0 && (i.volume ?? 0) > 0);
+        if (withVol.length === 0) return null;
+
+        // Объём продаж в день (м³/день)
+        const volPerDay = withVol.reduce((sum, i) => sum + i.salesPerDay * (i.volume ?? 0), 0);
+        // Через сколько дней машина "продастся"
+        const intervalDays = volPerDay > 0 ? Math.round(truckVol / volPerDay) : null;
+
+        // Топ-20% по продажам — когда закончатся?
+        const bySpeed = [...sortedItems.filter(i => i.salesPerDay > 0)]
+            .sort((a, b) => b.salesPerDay - a.salesPerDay);
+        const top = bySpeed.slice(0, Math.max(1, Math.ceil(bySpeed.length * 0.2)));
+        const urgentDays = Math.round(Math.min(...top.map(i => i.stockQty / i.salesPerDay)));
+
+        const recommendedCoverage = intervalDays
+            ? (forecastDays + deliveryDays) + intervalDays
+            : null;
+
+        return { volPerDay: +volPerDay.toFixed(2), intervalDays, urgentDays, recommendedCoverage };
+    }, [sortedItems, truckVol, forecastDays, deliveryDays]);
+
     async function handleDownloadExcel() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/mysklad/export-excel`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ items: aiItems, params: { truckVol, forecastDays, deliveryDays, coverageDays, destination }, aiTruck, aiSummary }),
+            body: JSON.stringify({
+                items: aiItems,
+                params: { truckVol, forecastDays, deliveryDays, coverageDays, destination },
+                aiTruck,
+                aiSummary,
+                dateFrom: dateFrom ? dateFrom.format('YYYY-MM-DD') : undefined,
+                dateTo:   dateTo   ? dateTo.format('YYYY-MM-DD')   : undefined,
+            }),
         });
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -413,6 +443,82 @@ function PurchaseOrderPage() {
                             </Paper>
                         ))}
                     </Box>
+                )}
+
+                {/* Блок аналитики заказа */}
+                {orderInsights && (
+                    <Paper variant="outlined" sx={{ p: 2.5, mb: 2.5, borderRadius: 2, background: '#f8f9ff', borderColor: '#c5cae9' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <Typography variant="subtitle2" fontWeight={700} color="primary">📦 Аналитика закупки</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+
+                            {/* Рекомендуемый интервал */}
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" display="block">Скорость продаж (м³/день)</Typography>
+                                <Typography variant="h6" fontWeight={700} color="primary.main">{orderInsights.volPerDay} м³/д</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    = машина {truckVol} м³ заполняется за ~{orderInsights.intervalDays ?? '?'} дн
+                                </Typography>
+                            </Box>
+
+                            <Box sx={{ borderLeft: '1px solid #c5cae9', pl: 3 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Рекомендуемый интервал заказа</Typography>
+                                <Typography variant="h6" fontWeight={700} color={orderInsights.intervalDays && orderInsights.intervalDays < 30 ? 'error.main' : 'success.main'}>
+                                    раз в {orderInsights.intervalDays ?? '?'} дней
+                                </Typography>
+                                {orderInsights.recommendedCoverage && (
+                                    <Box sx={{ mt: 0.5, p: 1, background: '#e8eaf6', borderRadius: 1, fontSize: 12 }}>
+                                        <Typography variant="caption" fontWeight={600} color="primary.dark" display="block">
+                                            💡 Горизонт покрытия = срок заказа + интервал
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            = ({forecastDays} + {deliveryDays}) + {orderInsights.intervalDays} = <b>{orderInsights.recommendedCoverage} дн</b>
+                                        </Typography>
+                                        {orderInsights.recommendedCoverage !== coverageDays && (
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ mt: 0.5, fontSize: 11, py: 0.25, display: 'block' }}
+                                                onClick={() => setCoverageDays(orderInsights.recommendedCoverage!)}
+                                            >
+                                                Применить {orderInsights.recommendedCoverage} дн
+                                            </Button>
+                                        )}
+                                    </Box>
+                                )}
+                            </Box>
+
+                            <Box sx={{ borderLeft: '1px solid #c5cae9', pl: 3 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Топ-20% товаров закончатся через</Typography>
+                                <Typography variant="h6" fontWeight={700}
+                                    color={orderInsights.urgentDays <= (forecastDays + deliveryDays) ? 'error.main' : orderInsights.urgentDays <= coverageDays ? 'warning.main' : 'success.main'}>
+                                    {orderInsights.urgentDays} дней
+                                </Typography>
+                                <Typography variant="caption" color={orderInsights.urgentDays <= (forecastDays + deliveryDays) ? 'error.main' : 'text.secondary'}>
+                                    {orderInsights.urgentDays <= (forecastDays + deliveryDays)
+                                        ? '🚨 Уже опоздали — срочный заказ!'
+                                        : orderInsights.urgentDays <= coverageDays
+                                        ? '⚠️ Пора делать заказ'
+                                        : '✅ Запас в норме'}
+                                </Typography>
+                            </Box>
+
+                            <Box sx={{ borderLeft: '1px solid #c5cae9', pl: 3, maxWidth: 280 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={0.5}>
+                                    Формула горизонта покрытия:
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ lineHeight: 1.7 }}>
+                                    <b>Горизонт</b> — сколько дней должно хватить товара с момента оформления заказа до прихода <i>следующего</i> заказа.
+                                </Typography>
+                                <Box sx={{ mt: 0.75, p: 1, background: '#fff', borderRadius: 1, border: '1px solid #c5cae9', fontFamily: 'monospace', fontSize: 11 }}>
+                                    Горизонт = (изготовление + доставка) + интервал_между_заказами<br />
+                                    = {forecastDays} + {deliveryDays} + {orderInsights.intervalDays ?? '?'} = <b>{orderInsights.recommendedCoverage ?? '?'} дн</b>
+                                </Box>
+                            </Box>
+
+                        </Box>
+                    </Paper>
                 )}
 
                 {/* Таблица */}
